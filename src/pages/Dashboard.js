@@ -28,7 +28,7 @@ export default function Dashboard() {
 
   const listed = items.filter(i => i.status === 'listed')
   const sold = items.filter(i => i.status === 'sold' && inPeriod(i.date_sold))
-  const inventoryValue = listed.reduce((sum, i) => sum + (i.purchase_price || 0), 0)
+  // inventoryValue removed
   const totalRevenue = sold.reduce((sum, i) => sum + (i.sale_price || 0), 0)
   const totalCost = sold.reduce((sum, i) => sum + (i.purchase_price || 0), 0)
   const totalProfit = totalRevenue - totalCost
