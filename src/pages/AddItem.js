@@ -8,10 +8,35 @@ export default function AddItem() {
     name: '', brand: '', size: '', purchase_price: '', listing_price: '',
     platform: 'Plick', notes: '', date_purchased: ''
   })
+  const [photo, setPhoto] = useState(null)
+  const [preview, setPreview] = useState(null)
+  const [uploading, setUploading] = useState(false)
+
   const handleChange = e => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
+
+  const handlePhoto = e => {
+    const file = e.target.files[0]
+    if (!file) return
+    setPhoto(file)
+    setPreview(URL.createObjectURL(file))
+  }
+
   const handleSubmit = async () => {
     if (!form.name) return alert('Item name is required')
+    setUploading(true)
     const { data: { user } } = await supabase.auth.getUser()
+
+    let photo_url = null
+    if (photo) {
+      const ext = photo.name.split('.').pop()
+      const filename = `${user.id}-${Date.now()}.${ext}`
+      const { error } = await supabase.storage.from('item-photos').upload(filename, photo)
+      if (!error) {
+        const { data } = supabase.storage.from('item-photos').getPublicUrl(filename)
+        photo_url = data.publicUrl
+      }
+    }
+
     const data = {
       user_id: user.id,
       name: form.name,
@@ -22,11 +47,14 @@ export default function AddItem() {
       platform: form.platform || null,
       notes: form.notes || null,
       date_purchased: form.date_purchased || null,
+      photo_url,
       status: 'listed'
     }
     await supabase.from('items').insert([data])
+    setUploading(false)
     navigate('/inventory')
   }
+
   return (
     <div className="max-w-xl">
       <h1 className="text-2xl font-bold mb-6" style={{ color: '#e91e8c' }}>Add New Item</h1>
@@ -73,10 +101,19 @@ export default function AddItem() {
           <input name="notes" placeholder="Any extra details..." value={form.notes} onChange={handleChange}
             className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400" />
         </div>
-        <button onClick={handleSubmit}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Photo (optional)</label>
+          <input type="file" accept="image/*" onChange={handlePhoto}
+            className="w-full text-sm text-gray-500 file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-sm file:font-medium file:text-white cursor-pointer"
+            style={{ '--file-bg': '#e91e8c' }} />
+          {preview && (
+            <img src={preview} alt="preview" className="mt-3 rounded-lg w-full max-h-48 object-cover" />
+          )}
+        </div>
+        <button onClick={handleSubmit} disabled={uploading}
           className="text-white rounded-lg py-2 font-medium transition"
           style={{ backgroundColor: '#e91e8c' }}>
-          Save Item
+          {uploading ? 'Saving...' : 'Save Item'}
         </button>
       </div>
     </div>

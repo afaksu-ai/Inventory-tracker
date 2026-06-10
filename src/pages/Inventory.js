@@ -22,12 +22,12 @@ export default function Inventory() {
   }
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Inventory</h1>
+      <h1 className="text-2xl font-bold mb-6" style={{ color: '#e91e8c' }}>Inventory</h1>
       <div className="bg-white rounded-xl shadow overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
             <tr>
-              {['Item','Brand','Size','Bought','Listed','Platform','Status','Profit','Actions'].map(h => (
+              {['Photo','Item','Brand','Size','Bought','Listed','Platform','Status','Profit','Actions'].map(h => (
                 <th key={h} className="px-4 py-3 text-left">{h}</th>
               ))}
             </tr>
@@ -37,6 +37,12 @@ export default function Inventory() {
               const profit = item.status === 'sold' ? (item.sale_price - item.purchase_price) : null
               return (
                 <tr key={item.id} className="border-t hover:bg-gray-50">
+                  <td className="px-4 py-3">
+                    {item.photo_url
+                      ? <img src={item.photo_url} alt={item.name} className="w-12 h-12 object-cover rounded-lg" />
+                      : <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs">No photo</div>
+                    }
+                  </td>
                   <td className="px-4 py-3 font-medium">{item.name}</td>
                   <td className="px-4 py-3">{item.brand}</td>
                   <td className="px-4 py-3">{item.size}</td>
@@ -44,7 +50,7 @@ export default function Inventory() {
                   <td className="px-4 py-3">{item.listing_price} kr</td>
                   <td className="px-4 py-3">{item.platform}</td>
                   <td className="px-4 py-3">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${item.status === 'sold' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${item.status === 'sold' ? 'bg-green-100 text-green-700' : 'bg-pink-100 text-pink-700'}`}>
                       {item.status}
                     </span>
                   </td>
