@@ -3,10 +3,13 @@ import { supabase } from '../supabase'
 
 export default function Inventory() {
   const [items, setItems] = useState([])
+  const [selectedPhoto, setSelectedPhoto] = useState(null)
+
   useEffect(() => {
     supabase.from('items').select('*').order('created_at', { ascending: false })
       .then(({ data }) => setItems(data || []))
   }, [])
+
   const markSold = async (id) => {
     const price = prompt('Sale price (kr)?')
     if (!price) return
@@ -15,14 +18,35 @@ export default function Inventory() {
     }).eq('id', id)
     setItems(items.map(i => i.id === id ? { ...i, status: 'sold', sale_price: parseFloat(price) } : i))
   }
+
   const deleteItem = async (id) => {
     if (!window.confirm('Delete this item?')) return
     await supabase.from('items').delete().eq('id', id)
     setItems(items.filter(i => i.id !== id))
   }
+
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6" style={{ color: '#e91e8c' }}>Inventory</h1>
+
+      {/* Fullscreen photo modal */}
+      {selectedPhoto && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50"
+          onClick={() => setSelectedPhoto(null)}
+        >
+          <div className="relative max-w-2xl w-full px-4">
+            <img src={selectedPhoto} alt="Full size" className="w-full rounded-xl object-contain max-h-screen" />
+            <button
+              onClick={() => setSelectedPhoto(null)}
+              className="absolute top-2 right-6 text-white text-3xl font-bold hover:text-pink-400"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-xl shadow overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
@@ -39,7 +63,12 @@ export default function Inventory() {
                 <tr key={item.id} className="border-t hover:bg-gray-50">
                   <td className="px-4 py-3">
                     {item.photo_url
-                      ? <img src={item.photo_url} alt={item.name} className="w-12 h-12 object-cover rounded-lg" />
+                      ? <img
+                          src={item.photo_url}
+                          alt={item.name}
+                          className="w-12 h-12 object-cover rounded-lg cursor-pointer hover:opacity-80 transition"
+                          onClick={() => setSelectedPhoto(item.photo_url)}
+                        />
                       : <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs">No photo</div>
                     }
                   </td>
