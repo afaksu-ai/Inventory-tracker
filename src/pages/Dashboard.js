@@ -1,21 +1,34 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabase'
-
-const PERIODS = [
-  { label: 'This week', days: 7 },
-  { label: 'This month', days: 30 },
-  { label: 'Last 3 months', days: 90 },
-  { label: 'This year', days: 365 },
-  { label: 'All time', days: null },
-]
+import { useLanguage } from '../context/LanguageContext'
 
 export default function Dashboard() {
+  const { t } = useLanguage()
   const [items, setItems] = useState([])
-  const [period, setPeriod] = useState(PERIODS[4])
+  const [period, setPeriod] = useState(null)
+  const [vatRate, setVatRate] = useState(25)
+
+  const PERIODS = [
+    { label: t.thisWeek, days: 7 },
+    { label: t.thisMonth, days: 30 },
+    { label: t.last3Months, days: 90 },
+    { label: t.thisYear, days: 365 },
+    { label: t.allTime, days: null },
+  ]
 
   useEffect(() => {
-    supabase.from('items').select('*').then(({ data }) => setItems(data || []))
+    setPeriod(PERIODS[4])
+    const load = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      const { data: settings } = await supabase.from('user_settings').select('*').eq('user_id', user.id).maybeSingle()
+      if (settings) setVatRate(settings.vat_rate)
+      const { data } = await supabase.from('items').select('*')
+      setItems(data || [])
+    }
+    load()
   }, [])
+
+  if (!period) return null
 
   const inPeriod = (dateStr) => {
     if (!period.days) return true
@@ -28,43 +41,37 @@ export default function Dashboard() {
 
   const listed = items.filter(i => i.status === 'listed')
   const sold = items.filter(i => i.status === 'sold' && inPeriod(i.date_sold))
-  // inventoryValue removed
   const totalRevenue = sold.reduce((sum, i) => sum + (i.sale_price || 0), 0)
   const totalCost = sold.reduce((sum, i) => sum + (i.purchase_price || 0), 0)
   const totalProfit = totalRevenue - totalCost
 
-  // VAT calculations (25% Swedish VAT)
-  // If prices include VAT: VAT = price * 0.25/1.25 = price / 5
-  const vatOnRevenue = totalRevenue / 5
-  const revenueExVat = totalRevenue - vatOnRevenue
+  // VAT calc using custom rate (prices assumed to include VAT)
+  const rate = parseFloat(vatRate) || 0
+  const vatDivisor = 1 + (rate / 100)
+  const revenueExVat = totalRevenue / vatDivisor
+  const vatOnRevenue = totalRevenue - revenueExVat
   const profitExVat = revenueExVat - totalCost
-  const vatOwed = vatOnRevenue
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold" style={{ color: '#e91e8c' }}>Dashboard</h1>
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+        <h1 className="text-2xl font-bold" style={{ color: '#e91e8c' }}>{t.dashboard}</h1>
         <div className="flex gap-2 flex-wrap">
           {PERIODS.map(p => (
-            <button
-              key={p.label}
-              onClick={() => setPeriod(p)}
+            <button key={p.label} onClick={() => setPeriod(p)}
               className={`px-3 py-1 rounded-full text-sm font-medium transition ${period.label === p.label ? 'text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-              style={period.label === p.label ? { backgroundColor: '#e91e8c' } : {}}
-            >
+              style={period.label === p.label ? { backgroundColor: '#e91e8c' } : {}}>
               {p.label}
             </button>
           ))}
         </div>
       </div>
-
-      {/* Main stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         {[
-          { label: 'Listed Items', value: listed.length },
-          { label: 'Items Sold', value: sold.length },
-          { label: 'Total Revenue', value: `${totalRevenue.toFixed(0)} kr` },
-          { label: 'Total Profit', value: `${totalProfit.toFixed(0)} kr` },
+          { label: t.listedItems, value: listed.length },
+          { label: t.soldItems, value: sold.length },
+          { label: t.totalRevenue, value: `${totalRevenue.toFixed(0)} kr` },
+          { label: t.totalProfit, value: `${totalProfit.toFixed(0)} kr` },
         ].map(card => (
           <div key={card.label} className="bg-white rounded-xl shadow p-4">
             <p className="text-gray-500 text-sm">{card.label}</p>
@@ -72,16 +79,16 @@ export default function Dashboard() {
           </div>
         ))}
       </div>
-
-      {/* VAT dashboard */}
       <div className="bg-white rounded-xl shadow p-6">
-        <h2 className="text-lg font-bold mb-4" style={{ color: '#e91e8c' }}>🧾 VAT Summary (25% moms)</h2>
+        <h2 className="text-lg font-bold mb-4" style={{ color: '#e91e8c' }}>
+          🧾 {t.vatSummary.replace('25%', `${rate}%`)}
+        </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: 'Revenue incl. VAT', value: `${totalRevenue.toFixed(0)} kr`, desc: 'What customers paid' },
-            { label: 'VAT to pay (25%)', value: `${vatOwed.toFixed(0)} kr`, desc: 'Owed to Skatteverket' },
-            { label: 'Revenue excl. VAT', value: `${revenueExVat.toFixed(0)} kr`, desc: 'Your actual revenue' },
-            { label: 'Profit excl. VAT', value: `${profitExVat.toFixed(0)} kr`, desc: 'After costs and VAT' },
+            { label: t.revenueInclVat, value: `${totalRevenue.toFixed(0)} kr`, desc: t.whatCustomersPaid },
+            { label: t.vatToPay.replace('25%', `${rate}%`), value: `${vatOnRevenue.toFixed(0)} kr`, desc: t.owedToTax },
+            { label: t.revenueExclVat, value: `${revenueExVat.toFixed(0)} kr`, desc: t.actualRevenue },
+            { label: t.profitExclVat, value: `${profitExVat.toFixed(0)} kr`, desc: t.afterCosts },
           ].map(card => (
             <div key={card.label} className="bg-pink-50 rounded-xl p-4">
               <p className="text-gray-500 text-sm">{card.label}</p>
@@ -90,7 +97,7 @@ export default function Dashboard() {
             </div>
           ))}
         </div>
-        <p className="text-xs text-gray-400 mt-4">⚠️ VAT only applies if you're registered for moms. If you're under the threshold (80,000 kr/year), you may not need to charge VAT. Consult Skatteverket or an accountant.</p>
+        <p className="text-xs text-gray-400 mt-4">{t.vatNote}</p>
       </div>
     </div>
   )
