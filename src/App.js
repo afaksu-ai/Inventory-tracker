@@ -38,7 +38,7 @@ function LanguagePicker() {
 
 function App() {
   const { lang, t } = useLanguage()
-  const { color } = useTheme()
+  const { color, bg, cardBg, textSecondary } = useTheme()
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
@@ -59,8 +59,8 @@ function App() {
 
   return (
     <Router>
-      <div className="min-h-screen bg-gray-50">
-        <nav className="bg-white shadow px-6 py-4 flex gap-6 items-center flex-wrap">
+      <div className="min-h-screen" style={{ backgroundColor: bg }}>
+        <nav className="shadow px-6 py-4 flex gap-6 items-center flex-wrap" style={{ backgroundColor: cardBg }}>
           <Link to="/" className="font-bold" style={{ color }}>📦 {t.appName}</Link>
           <Link to="/inventory" className="text-gray-600 hover:opacity-70">{t.inventory}</Link>
           <Link to="/add" className="text-gray-600 hover:opacity-70">{t.addItem}</Link>
