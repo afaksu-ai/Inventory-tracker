@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard'
 import Inventory from './pages/Inventory'
 import AddItem from './pages/AddItem'
 import ImportItems from './pages/ImportItems'
+import Settings from './pages/Settings'
 import Login from './pages/Login'
 
 function LanguagePicker() {
@@ -64,6 +65,7 @@ function App() {
           <Link to="/import" className="text-gray-600 hover:text-pink-600">
             {lang === 'sv' ? '📂 Importera' : '📂 Import'}
           </Link>
+          <Link to="/settings" className="text-gray-600 hover:text-pink-600">⚙️</Link>
           <div className="ml-auto flex items-center gap-3">
             <span className="text-sm text-gray-400">{user.email}</span>
             <button onClick={() => supabase.auth.signOut()} className="text-sm text-gray-500 hover:text-pink-600">{t.logout}</button>
@@ -75,6 +77,7 @@ function App() {
             <Route path="/inventory" element={<Inventory />} />
             <Route path="/add" element={<AddItem />} />
             <Route path="/import" element={<ImportItems />} />
+            <Route path="/settings" element={<Settings />} />
           </Routes>
         </div>
       </div>
