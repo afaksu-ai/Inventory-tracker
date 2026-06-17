@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabase'
 import { useLanguage } from '../context/LanguageContext'
+import { useTheme } from '../context/ThemeContext'
+
+const PRESET_COLORS = ['#e91e8c', '#6366f1', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#8b5cf6', '#000000']
 
 export default function Settings() {
   const { t } = useLanguage()
+  const { color, updateColor } = useTheme()
   const [vatRate, setVatRate] = useState(25)
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -20,7 +24,7 @@ export default function Settings() {
 
   const handleSave = async () => {
     const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from('user_settings').upsert({ user_id: user.id, vat_rate: parseFloat(vatRate) })
+    await supabase.from('user_settings').upsert({ user_id: user.id, vat_rate: parseFloat(vatRate), theme_color: color })
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
@@ -28,23 +32,46 @@ export default function Settings() {
   if (loading) return null
 
   return (
-    <div className="max-w-md">
-      <h1 className="text-2xl font-bold mb-6" style={{ color: '#e91e8c' }}>⚙️ {t.settings}</h1>
+    <div className="max-w-md flex flex-col gap-6">
+      <h1 className="text-2xl font-bold" style={{ color }}>⚙️ {t.settings}</h1>
+
       <div className="bg-white rounded-xl shadow p-6">
         <label className="block text-sm font-medium text-gray-700 mb-1">{t.vatRate}</label>
         <p className="text-xs text-gray-400 mb-3">{t.vatRateDesc}</p>
         <div className="flex items-center gap-3">
           <input type="number" value={vatRate} onChange={e => setVatRate(e.target.value)}
-            className="w-24 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400" />
+            className="w-24 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
+            style={{ '--tw-ring-color': color }} />
           <span className="text-gray-500">%</span>
-          <button onClick={handleSave}
-            className="text-sm text-white px-4 py-2 rounded-lg font-medium ml-auto"
-            style={{ backgroundColor: '#e91e8c' }}>
-            {t.save}
-          </button>
         </div>
-        {saved && <p className="text-sm text-green-600 mt-3">✓ {t.saved}</p>}
       </div>
+
+      <div className="bg-white rounded-xl shadow p-6">
+        <label className="block text-sm font-medium text-gray-700 mb-3">
+          {t.lang === 'sv' ? 'Färgtema' : 'Theme color'}
+        </label>
+        <div className="flex gap-3 flex-wrap mb-4">
+          {PRESET_COLORS.map(c => (
+            <button key={c} onClick={() => updateColor(c)}
+              className="w-10 h-10 rounded-full border-2 transition"
+              style={{ backgroundColor: c, borderColor: color === c ? '#000' : 'transparent' }} />
+          ))}
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-gray-500">
+            {t.lang === 'sv' ? 'Eller välj egen färg:' : 'Or pick a custom color:'}
+          </span>
+          <input type="color" value={color} onChange={e => updateColor(e.target.value)}
+            className="w-10 h-10 rounded-lg cursor-pointer border-0" />
+        </div>
+      </div>
+
+      <button onClick={handleSave}
+        className="text-sm text-white px-4 py-2 rounded-lg font-medium"
+        style={{ backgroundColor: color }}>
+        {t.save}
+      </button>
+      {saved && <p className="text-sm text-green-600">✓ {t.saved}</p>}
     </div>
   )
 }

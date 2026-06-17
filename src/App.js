@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { supabase } from './supabase'
 import { useLanguage } from './context/LanguageContext'
+import { useTheme } from './context/ThemeContext'
 import Dashboard from './pages/Dashboard'
 import Inventory from './pages/Inventory'
 import AddItem from './pages/AddItem'
@@ -37,6 +38,7 @@ function LanguagePicker() {
 
 function App() {
   const { lang, t } = useLanguage()
+  const { color } = useTheme()
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
@@ -52,23 +54,23 @@ function App() {
   }, [])
 
   if (!lang) return <LanguagePicker />
-  if (loading) return <div className="min-h-screen flex items-center justify-center" style={{ color: '#e91e8c' }}>{t.loading}</div>
+  if (loading) return <div className="min-h-screen flex items-center justify-center" style={{ color }}>{t.loading}</div>
   if (!user) return <Login />
 
   return (
     <Router>
       <div className="min-h-screen bg-gray-50">
         <nav className="bg-white shadow px-6 py-4 flex gap-6 items-center flex-wrap">
-          <Link to="/" className="font-bold" style={{ color: '#e91e8c' }}>📦 {t.appName}</Link>
-          <Link to="/inventory" className="text-gray-600 hover:text-pink-600">{t.inventory}</Link>
-          <Link to="/add" className="text-gray-600 hover:text-pink-600">{t.addItem}</Link>
-          <Link to="/import" className="text-gray-600 hover:text-pink-600">
+          <Link to="/" className="font-bold" style={{ color }}>📦 {t.appName}</Link>
+          <Link to="/inventory" className="text-gray-600 hover:opacity-70">{t.inventory}</Link>
+          <Link to="/add" className="text-gray-600 hover:opacity-70">{t.addItem}</Link>
+          <Link to="/import" className="text-gray-600 hover:opacity-70">
             {lang === 'sv' ? '📂 Importera' : '📂 Import'}
           </Link>
-          <Link to="/settings" className="text-gray-600 hover:text-pink-600">⚙️</Link>
+          <Link to="/settings" className="text-gray-600 hover:opacity-70">⚙️</Link>
           <div className="ml-auto flex items-center gap-3">
             <span className="text-sm text-gray-400">{user.email}</span>
-            <button onClick={() => supabase.auth.signOut()} className="text-sm text-gray-500 hover:text-pink-600">{t.logout}</button>
+            <button onClick={() => supabase.auth.signOut()} className="text-sm text-gray-500 hover:opacity-70">{t.logout}</button>
           </div>
         </nav>
         <div className="p-6">

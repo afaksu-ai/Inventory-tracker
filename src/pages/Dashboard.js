@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabase'
 import { useLanguage } from '../context/LanguageContext'
+import { useTheme } from '../context/ThemeContext'
 
 export default function Dashboard() {
   const { t } = useLanguage()
+  const { color } = useTheme()
   const [items, setItems] = useState([])
   const [period, setPeriod] = useState(null)
   const [vatRate, setVatRate] = useState(25)
@@ -55,12 +57,12 @@ export default function Dashboard() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-        <h1 className="text-2xl font-bold" style={{ color: '#e91e8c' }}>{t.dashboard}</h1>
+        <h1 className="text-2xl font-bold" style={{ color }}>{t.dashboard}</h1>
         <div className="flex gap-2 flex-wrap">
           {PERIODS.map(p => (
             <button key={p.label} onClick={() => setPeriod(p)}
               className={`px-3 py-1 rounded-full text-sm font-medium transition ${period.label === p.label ? 'text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-              style={period.label === p.label ? { backgroundColor: '#e91e8c' } : {}}>
+              style={period.label === p.label ? { backgroundColor: color } : {}}>
               {p.label}
             </button>
           ))}
@@ -75,12 +77,12 @@ export default function Dashboard() {
         ].map(card => (
           <div key={card.label} className="bg-white rounded-xl shadow p-4">
             <p className="text-gray-500 text-sm">{card.label}</p>
-            <p className="text-2xl font-bold" style={{ color: '#e91e8c' }}>{card.value}</p>
+            <p className="text-2xl font-bold" style={{ color }}>{card.value}</p>
           </div>
         ))}
       </div>
       <div className="bg-white rounded-xl shadow p-6">
-        <h2 className="text-lg font-bold mb-4" style={{ color: '#e91e8c' }}>
+        <h2 className="text-lg font-bold mb-4" style={{ color }}>
           🧾 {t.vatSummary.replace('25%', `${rate}%`)}
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -92,7 +94,7 @@ export default function Dashboard() {
           ].map(card => (
             <div key={card.label} className="bg-pink-50 rounded-xl p-4">
               <p className="text-gray-500 text-sm">{card.label}</p>
-              <p className="text-xl font-bold" style={{ color: '#e91e8c' }}>{card.value}</p>
+              <p className="text-xl font-bold" style={{ color }}>{card.value}</p>
               <p className="text-xs text-gray-400 mt-1">{card.desc}</p>
             </div>
           ))}
